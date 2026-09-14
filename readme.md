@@ -111,6 +111,24 @@ docker exec crowdsec cscli decisions list
 docker exec crowdsec cscli decisions add --ip <ip>
 ```
 
+#### Create an allowlist (IP whitelist)
+
+```bash
+docker exec crowdsec cscli allowlist create boost -d "boost whitelist"
+```
+
+#### Add IP to allowlist
+
+```bash
+docker exec crowdsec cscli allowlist add boost <IP>
+```
+
+#### Inspect allowlist
+
+```bash
+docker exec crowdsec cscli allowlist inspect boost
+```
+
 ## Firewall (UFW)
 
 This setup uses UFW with [ufw-docker](https://github.com/chaifeng/ufw-docker).
