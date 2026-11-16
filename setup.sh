@@ -14,6 +14,14 @@ ENDCOLOR="\e[0m"
 CUR_TIMEZONE=$(timedatectl show | grep zone | sed 's/Timezone=//g')
 KOPIA_PASSWORD=$(tr </dev/urandom -dc A-Z-a-z-0-9 | head -c"${1:-10}")
 ARCHITECTURE=$(dpkg --print-architecture)
+case "$ARCHITECTURE" in
+  amd64) NVIM_ARCH=x86_64 ;;
+  arm64) NVIM_ARCH=arm64 ;;
+  *)
+    echo "Unsupported architecture: $ARCHITECTURE (expected amd64 or arm64)" >&2
+    exit 1
+    ;;
+esac
 
 # intro message
 echo -e "${GREEN}Welcome! This script should be run as the root user on a new Debian or Ubuntu server.${ENDCOLOR}\n"
@@ -101,8 +109,9 @@ apt upgrade -y
 apt install kopia rsync unattended-upgrades zsh bat eza ncdu apache2-utils clang ufw jq htop tmux -y
 
 # neovim
-curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+curl -fL -o /tmp/nvim.tar.gz "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz"
+sudo tar -C /opt -xzf /tmp/nvim.tar.gz
+sudo ln -sfn "/opt/nvim-linux-${NVIM_ARCH}/bin/nvim" /usr/local/bin/nvim
 
 # install coolify
 curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash
@@ -171,8 +180,11 @@ rm "/home/$username/.local/bin/boost.tar.gz"
 # chown -R "$username:" "/home/$username/.local/bin"
 
 # install zoxide
-sudo -u "$username" curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sudo -u "$username" bash
-ln -s "/home/$username/.local/bin/zoxide" "/usr/local/bin/zoxide"
+# Install system-wide as root to avoid sudo prompts for root-owned user directories.
+zoxide_installer=$(mktemp)
+curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh -o "$zoxide_installer"
+bash "$zoxide_installer" --bin-dir /usr/local/bin --man-dir /usr/local/share/man
+rm -f "$zoxide_installer"
 
 # clone wordpress repo and copy config
 mkdir -p "/etc/coolify-setup/mariadb"
