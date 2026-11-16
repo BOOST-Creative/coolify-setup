@@ -78,7 +78,10 @@ curl -s https://kopia.io/signing-key | gpg --dearmor -o /usr/share/keyrings/kopi
 echo "deb [signed-by=/usr/share/keyrings/kopia-keyring.gpg] http://packages.kopia.io/apt/ stable main" | tee /etc/apt/sources.list.d/kopia.list
 
 # download fzf binary
-wget -O /tmp/fzf.tar.gz "https://github.com/junegunn/fzf/releases/download/v0.60.3/fzf-0.60.3-linux_amd64.tar.gz"
+# Set FZF_VERSION to pin a release; otherwise use the latest stable release.
+FZF_VERSION=${FZF_VERSION:-$(curl -fsSL https://api.github.com/repos/junegunn/fzf/releases/latest | jq -er '.tag_name | select(type == "string" and length > 0)')}
+FZF_VERSION=${FZF_VERSION#v}
+wget -O /tmp/fzf.tar.gz "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${ARCHITECTURE}.tar.gz"
 tar -xzf /tmp/fzf.tar.gz -C /usr/bin/
 
 # yq for editing yml files
